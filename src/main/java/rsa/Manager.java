@@ -52,7 +52,7 @@ public class Manager {
 
     /**
      * Accept a match
-     * @param rideId id of rid to match
+     * @param rideId id of ride to match
      * @param matchId - id of match to consider
      */
     public void acceptMatch(long rideId, long matchId) { matcher.acceptMatch(rideId, matchId); }
