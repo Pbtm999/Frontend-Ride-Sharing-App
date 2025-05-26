@@ -133,5 +133,12 @@ public class RideMatch {
      * Cost of this ride, paid by the passenger to the driver
      * @return cost of this ride
      */
-    public float getCost() { return left.getCost(); }
+    public float getCost() {
+        if (left.getRideRole() == RideRole.PASSENGER) {
+            return right.getCost();
+        } else {
+            return left.getCost();
+        }
+
+    }
 }

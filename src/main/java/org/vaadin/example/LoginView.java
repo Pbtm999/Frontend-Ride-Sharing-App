@@ -20,19 +20,33 @@ import static rsa.match.PreferredMatch.*;
 import static rsa.ride.RideRole.DRIVER;
 import static rsa.ride.RideRole.PASSENGER;
 
+/**
+ * LoginView handles user login, registration, and displays user info
+ * in the RSA application. It conditionally shows login form or
+ * user dashboard based on current login status.
+ */
 @PageTitle("RSA")
 @Route(layout = MainView.class)
 public class LoginView extends FormLayout {
 
-    private final ManagerService usersService;
     private final ManagerService managerService;
     private MainView mainView;
 
-    public LoginView(ManagerService usersService, ManagerService managerService) {
-        this.usersService = usersService;
+    /**
+     * Constructs the LoginView with a ManagerService instance for backend calls.
+     *
+     * @param managerService service responsible for authentication, registration, and user info
+     */
+    public LoginView(ManagerService managerService) {
         this.managerService = managerService;
     }
 
+    /**
+     * Lifecycle callback invoked when the component is attached to the UI.
+     * Determines whether to show login form or user info form based on login state.
+     *
+     * @param attachEvent attach event information
+     */
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
@@ -51,17 +65,19 @@ public class LoginView extends FormLayout {
         }
     }
 
-    private void buildLoginForm() {
+    /**
+     * Generates a styled FormLayout container used by login, registration, and user forms.
+     *
+     * @return a styled FormLayout ready to add components
+     */
+    private FormLayout generateForm() {
         removeAll();
-        getStyle().set("width", "100vw");
-        getStyle()
+
+        getStyle().set("width", "100vw")
                 .set("display", "flex")
                 .set("justify-content", "center");
 
         FormLayout formLayout = new FormLayout();
-
-        formLayout.removeAll();
-
         formLayout.getStyle()
                 .set("margin-top", "50px")
                 .set("width", "fit-content")
@@ -72,6 +88,16 @@ public class LoginView extends FormLayout {
                 .set("border-radius", "10px")
                 .set("justify-self", "center");
 
+        return formLayout;
+    }
+
+    /**
+     * Builds and displays the login form allowing users to input nickname and password.
+     * Handles login button logic and offers navigation to the registration form.
+     */
+    private void buildLoginForm() {
+        FormLayout formLayout = generateForm();
+
         H1 title = new H1("Login");
         TextField nickname = new TextField("Nickname");
         PasswordField password = new PasswordField("Password");
@@ -81,11 +107,10 @@ public class LoginView extends FormLayout {
         Button loginButton = new Button("Login", event -> {
             String nick = nickname.getValue();
             String key = password.getValue();
-            if (usersService.authenticate(nick, key)) {
+            if (managerService.authenticate(nick, key)) {
                 if (mainView != null) {
                     mainView.setLoggedInNick(nick);
                     mainView.setLoggedInKey(key);
-
                     Notification.show("Login successful!", 3000, Notification.Position.MIDDLE);
                     buildUserForm();
                 }
@@ -101,28 +126,15 @@ public class LoginView extends FormLayout {
         switchToRegister.addClickListener(e -> showRegisterForm());
 
         formLayout.add(title, nickname, password, loginButton, switchToRegister);
-
         add(formLayout);
     }
 
+    /**
+     * Builds and displays the registration form allowing new users to create an account.
+     * Handles registration logic and provides navigation back to the login form.
+     */
     private void showRegisterForm() {
-        removeAll();
-        getStyle()
-                .set("width", "100vw")
-                .set("display", "flex")
-                .set("justify-content", "center");
-
-        FormLayout formLayout = new FormLayout();
-
-        formLayout.getStyle()
-                .set("margin-top", "50px")
-                .set("width", "fit-content")
-                .set("height", "fit-content")
-                .set("padding", "2rem")
-                .set("background-color", "white")
-                .set("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.1)")
-                .set("border-radius", "10px")
-                .set("justify-self", "center");
+        FormLayout formLayout = generateForm();
 
         H1 title = new H1("Register");
         TextField nickname = new TextField("Nickname");
@@ -134,46 +146,43 @@ public class LoginView extends FormLayout {
             String nick = nickname.getValue();
             String user = username.getValue();
             try {
-                User userRegisted = usersService.register(nick, user);
-                if (userRegisted != null) {
-
-                    if (mainView != null) {
-                        mainView.setLoggedInNick(nick);
-                        mainView.setLoggedInKey(userRegisted.getKey());
-
-                        Notification.show("Register successful! Your key: " + userRegisted.getKey(), 8000, Notification.Position.MIDDLE);
-                        buildUserForm();
-                    }
+                User userRegistered = managerService.register(nick, user);
+                if (userRegistered != null && mainView != null) {
+                    mainView.setLoggedInNick(nick);
+                    mainView.setLoggedInKey(userRegistered.getKey());
+                    Notification.show("Register successful! Your key: " + userRegistered.getKey(), 8000, Notification.Position.MIDDLE);
+                    buildUserForm();
                 }
             } catch (RideSharingAppException e) {
-                System.out.println("error: " + e.getMessage());
+                System.err.println("Registration error: " + e.getMessage());
+                Notification.show("Registration failed: " + e.getMessage(), 3000, Notification.Position.MIDDLE);
             }
-
         });
 
-        Div switchToRegister = new Div("Login instead");
-        switchToRegister.getStyle()
+        Div switchToLogin = new Div("Login instead");
+        switchToLogin.getStyle()
                 .set("cursor", "pointer")
                 .set("color", "blue")
                 .set("width", "fit-content")
                 .set("text-decoration", "underline");
-        switchToRegister.addClickListener(e -> buildLoginForm());
+        switchToLogin.addClickListener(e -> buildLoginForm());
 
-        formLayout.add(title, nickname, username, registerButton, switchToRegister);
-
+        formLayout.add(title, nickname, username, registerButton, switchToLogin);
         add(formLayout);
     }
 
+    /**
+     * Builds and displays the user info form, showing average ratings and preferred match options.
+     * Allows the user to update their preferred match setting.
+     */
     private void buildUserForm() {
         removeAll();
 
-        getStyle().set("width", "100vw");
-        getStyle()
+        getStyle().set("width", "100vw")
                 .set("display", "flex")
                 .set("justify-content", "center");
 
         FormLayout formLayout = new FormLayout();
-
         formLayout.removeAll();
 
         formLayout.getStyle()
@@ -203,22 +212,21 @@ public class LoginView extends FormLayout {
         select.setLabel("Preferred Match");
         select.setItems(BETTER, CHEAPER, CLOSER);
 
+        // Update preferred match on selection change
         select.addValueChangeListener(event -> {
             PreferredMatch match = event.getValue();
-
             managerService.setPreferredMatch(loggedInNick, loggedInKey, match);
         });
 
+        // Try to set the current preferred match value, fallback to login form on error
         try {
             select.setValue(managerService.getPreferredMatch(loggedInNick, loggedInKey));
         } catch (RideSharingAppException e) {
-            System.out.println("error: " + e.getMessage());
+            System.err.println("Error fetching preferred match: " + e.getMessage());
             mainView.setLoggedInNick(null);
             mainView.setLoggedInKey(null);
             buildLoginForm();
         }
-
-        //257e35d5-247c-330e-9626-e898367a1061
 
         formLayout.add(title, starsP, starsD, select);
         add(formLayout);
