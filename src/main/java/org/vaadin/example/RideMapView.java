@@ -34,8 +34,7 @@ import static rsa.ride.RideRole.PASSENGER;
 @PageTitle("RSA")
 @Route(layout = MainView.class)
 public class RideMapView extends VerticalLayout {
-    private static final String API_KEY = "AIzaSyDX7UOQ5qJWDvN0qXnDwK-n5IXF7AaV0r4";
-    private MainView mainView;
+    private static final String API_KEY = ""
     private GoogleMapMarker fromMarker;
     private LatLon pos = null;
     private final VerticalLayout mapLayout = new VerticalLayout();
